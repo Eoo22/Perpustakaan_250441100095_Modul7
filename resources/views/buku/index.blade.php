@@ -80,20 +80,49 @@
 
                 dataBuku.forEach(buku => {
                     const tr = document.createElement('tr');
-                    let aksiHtml = canKelola ? `
-                        <td class="border border-gray-300 p-2 text-center space-x-2">
-                            <button onclick='editBuku(${JSON.stringify(buku)})' class="bg-yellow-500 text-white px-3 py-1 rounded text-sm">Ubah</button>
-                            <button onclick="hapusBuku(${buku.id})" class="bg-red-600 text-white px-3 py-1 rounded text-sm">Hapus</button>
-                        </td>
-                    ` : '';
+                    
+                    // PERBAIKAN A1: Menggunakan escape text secara aman via DOM textContent (atau escape di level rendering)
+                    // untuk mencegah eksekusi payload XSS (seperti tag <script>) pada sisi klien.
+                    const tdKategori = document.createElement('td');
+                    tdKategori.className = 'border border-gray-300 p-2';
+                    tdKategori.textContent = buku.kategori_id || '-';
 
-                    tr.innerHTML = `
-                        <td class="border border-gray-300 p-2">${buku.kategori_id || '-'}</td>
-                        <td class="border border-gray-300 p-2">${buku.judul || '-'}</td>
-                        <td class="border border-gray-300 p-2">${buku.penulis || '-'}</td>
-                        <td class="border border-gray-300 p-2">${buku.tahun_terbit || '-'}</td>
-                        ${aksiHtml}
-                    `;
+                    const tdJudul = document.createElement('td');
+                    tdJudul.className = 'border border-gray-300 p-2';
+                    tdJudul.textContent = buku.judul || '-'; // Mencegah XSS (menggantikan unescaped rendering)
+
+                    const tdPenulis = document.createElement('td');
+                    tdPenulis.className = 'border border-gray-300 p-2';
+                    tdPenulis.textContent = buku.penulis || '-';
+
+                    const tdTahun = document.createElement('td');
+                    tdTahun.className = 'border border-gray-300 p-2';
+                    tdTahun.textContent = buku.tahun_terbit || '-';
+
+                    tr.appendChild(tdKategori);
+                    tr.appendChild(tdJudul);
+                    tr.appendChild(tdPenulis);
+                    tr.appendChild(tdTahun);
+
+                    if (canKelola) {
+                        const tdAksi = document.createElement('td');
+                        tdAksi.className = 'border border-gray-300 p-2 text-center space-x-2';
+                        
+                        const btnUbah = document.createElement('button');
+                        btnUbah.className = 'bg-yellow-500 text-white px-3 py-1 rounded text-sm';
+                        btnUbah.innerText = 'Ubah';
+                        btnUbah.onclick = () => editBuku(buku);
+
+                        const btnHapus = document.createElement('button');
+                        btnHapus.className = 'bg-red-600 text-white px-3 py-1 rounded text-sm';
+                        btnHapus.innerText = 'Hapus';
+                        btnHapus.onclick = () => hapusBuku(buku.id);
+
+                        tdAksi.appendChild(btnUbah);
+                        tdAksi.appendChild(btnHapus);
+                        tr.appendChild(tdAksi);
+                    }
+
                     tbody.appendChild(tr);
                 });
             } catch (error) {
