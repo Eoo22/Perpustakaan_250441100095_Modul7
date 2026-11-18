@@ -84,20 +84,22 @@ Route::middleware('auth')->group(function () {
             ->whereNumber('peminjaman')->name('riwayat.show');
     });
 
-    // ===== CELAH PRAKTIKUM (SEMENTARA, HANYA UNTUK PEMBUKTIAN) =====
+    // ===== CELAH PRAKTIKUM =====
 
-    // A2: SQL Injection (input digabung langsung ke query)
+    // A2 (SUDAH DIPERBAIKI): memakai parameter binding
     Route::get('/buku-cari', function (Request $request) {
-        $judul = $request->query('judul');
-        $hasil = DB::select("SELECT * FROM bukus WHERE judul LIKE '%$judul%'");
+        $judul = $request->query('judul', '');
+        $hasil = DB::select(
+            'SELECT * FROM bukus WHERE judul LIKE ?',
+            ['%'.$judul.'%']
+        );
         return response()->json($hasil);
     });
 
-    // A3: hapus lewat GET (rawan CSRF)
-    Route::get('/buku/{buku}/hapus', [BukuController::class, 'destroy'])
-        ->whereNumber('buku');
+    // A3 (SUDAH DIPERBAIKI): route GET /buku/{buku}/hapus dihapus.
+    // Penghapusan hanya lewat DELETE /buku/{buku} (buku.destroy) di atas.
 
-    // A4: IDOR (tanpa cek kepemilikan)
+    // A4 (BELUM DIPERBAIKI, ditutup di Soal 4): IDOR
     Route::get('/peminjaman/{id}', function ($id) {
         return response()->json(Peminjaman::findOrFail($id));
     })->whereNumber('id');

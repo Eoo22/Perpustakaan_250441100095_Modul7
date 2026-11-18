@@ -33,7 +33,7 @@
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($bukus as $buku)
                                 <tr>
-                                    <td class="px-4 py-2">{!! $buku->judul !!}</td>
+                                    <td class="px-4 py-2">{{ $buku->judul }}</td>
                                     <td class="px-4 py-2">{{ $buku->penulis }}</td>
                                     <td class="px-4 py-2">{{ $buku->kategori->nama ?? '-' }}</td>
                                     <td class="px-4 py-2">{{ $buku->tahun_terbit }}</td>
