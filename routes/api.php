@@ -5,7 +5,9 @@ use App\Http\Controllers\Api\RekapController;
 use App\Models\Kategori;
 use Illuminate\Support\Facades\Route;
 
-Route::apiResource('buku', BukuController::class);
+// Nama route diberi prefix "api." agar tidak bentrok dengan route web (buku.*).
+// URL tetap sama: /api/buku, /api/buku/{buku}, dst.
+Route::apiResource('buku', BukuController::class)->names('api.buku');
 
 // Daftar kategori untuk pilihan (dropdown) pada form buku di halaman /buku
 Route::get('kategori', fn () => response()->json([
