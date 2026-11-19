@@ -17,7 +17,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Route riwayat agar halaman / menu riwayat tidak error
     Route::get('/riwayat', function () {
         $peminjamans = class_exists(\App\Models\Peminjaman::class)
             ? \App\Models\Peminjaman::latest()->get()
@@ -34,21 +33,25 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('buku.index');
     })->name('riwayat.index');
 
-    // 2b: Route GET /buku-cari di balik middleware auth
+    // Route GET /buku-cari di balik middleware auth
     Route::get('/buku-cari', [BukuController::class, 'cari'])->name('buku.cari');
 
-    // Route daftar & kelola buku (tanpa route GET /buku/{buku}/hapus)
+    // Route baca buku (semua user login)
     Route::get('/buku', [BukuController::class, 'index'])->name('buku.index');
-    Route::get('/buku/create', [BukuController::class, 'create'])->name('buku.create');
-    Route::get('/buku/tambah', [BukuController::class, 'create']);
-    Route::post('/buku', [BukuController::class, 'store'])->name('buku.store');
-    Route::get('/buku/{buku}', [BukuController::class, 'show'])->name('buku.show');
-    Route::get('/buku/{buku}/edit', [BukuController::class, 'edit'])->name('buku.edit');
-    Route::put('/buku/{buku}', [BukuController::class, 'update'])->name('buku.update');
-    Route::patch('/buku/{buku}', [BukuController::class, 'update']);
 
-    // 2c: Penghapusan buku menggunakan metode DELETE
-    Route::delete('/buku/{buku}', [BukuController::class, 'destroy'])->name('buku.destroy');
+    // Soal 3: Route tambah, ubah, dan hapus buku dilindungi middleware can:kelola-buku
+    Route::middleware('can:kelola-buku')->group(function () {
+        Route::get('/buku/create', [BukuController::class, 'create'])->name('buku.create');
+        Route::get('/buku/tambah', [BukuController::class, 'create']);
+        Route::post('/buku', [BukuController::class, 'store'])->name('buku.store');
+        Route::get('/buku/{buku}/edit', [BukuController::class, 'edit'])->name('buku.edit');
+        Route::put('/buku/{buku}', [BukuController::class, 'update'])->name('buku.update');
+        Route::patch('/buku/{buku}', [BukuController::class, 'update']);
+        Route::delete('/buku/{buku}', [BukuController::class, 'destroy'])->name('buku.destroy');
+    });
+
+    // Route detail buku diletakkan setelah route statis (/buku/create, /buku/tambah)
+    Route::get('/buku/{buku}', [BukuController::class, 'show'])->name('buku.show');
 });
 
 require __DIR__.'/auth.php';

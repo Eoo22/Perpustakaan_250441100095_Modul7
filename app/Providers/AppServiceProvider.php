@@ -22,16 +22,21 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // SOAL 3: Gate kelola-buku hanya mengizinkan role admin dan petugas
-        Gate::define('kelola-buku', function (User $user) {
-            if (method_exists($user, 'hasAnyRole')) {
-                return $user->hasAnyRole(['admin', 'petugas']) || in_array($user->role, ['admin', 'petugas']);
-            }
-            return in_array($user->role, ['admin', 'petugas']);
+        Gate::define('kelola-buku', function (User $user): bool {
+            $hasRole = method_exists($user, 'hasAnyRole')
+                ? $user->hasAnyRole(['admin', 'petugas'])
+                : false;
+
+            return $hasRole || in_array($user->role ?? null, ['admin', 'petugas'], true);
         });
 
         // Gate akses-admin umum
-        Gate::define('akses-admin', function ($user) {
-            return $user->role === 'admin' || $user->role === 'petugas' || (method_exists($user, 'hasRole') && $user->hasRole('admin'));
+        Gate::define('akses-admin', function (User $user): bool {
+            $isAdmin = method_exists($user, 'hasRole')
+                ? $user->hasRole('admin')
+                : false;
+
+            return in_array($user->role ?? null, ['admin', 'petugas'], true) || $isAdmin;
         });
     }
 }

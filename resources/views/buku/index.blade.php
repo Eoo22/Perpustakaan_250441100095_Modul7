@@ -4,10 +4,13 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Daftar Buku
             </h2>
-            <a href="{{ route('buku.create') }}"
-               class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                Tambah Buku
-            </a>
+
+            @can('kelola-buku')
+                <a href="{{ route('buku.create') }}"
+                   class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                    Tambah Buku
+                </a>
+            @endcan
         </div>
     </x-slot>
 
@@ -41,7 +44,6 @@
                         <tbody>
                             @forelse ($bukus as $buku)
                                 <tr class="border-b">
-                                    {{-- 2a: Blade escaping agar payload XSS tampil sebagai teks biasa --}}
                                     <td class="px-4 py-2">{{ $buku->judul }}</td>
                                     <td class="px-4 py-2">{{ $buku->penulis ?? '-' }}</td>
                                     <td class="px-4 py-2">{{ $buku->stok ?? '-' }}</td>
@@ -49,19 +51,21 @@
                                         <a href="{{ route('buku.show', $buku) }}" class="text-blue-600 hover:underline">
                                             Detail
                                         </a>
-                                        <a href="{{ route('buku.edit', $buku) }}" class="text-amber-600 hover:underline">
-                                            Ubah
-                                        </a>
 
-                                        {{-- 2c: Hapus via DELETE dengan @csrf dan @method('DELETE') --}}
-                                        <form action="{{ route('buku.destroy', $buku) }}" method="POST" class="inline"
-                                              onsubmit="return confirm('Hapus buku ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:underline">
-                                                Hapus
-                                            </button>
-                                        </form>
+                                        @can('kelola-buku')
+                                            <a href="{{ route('buku.edit', $buku) }}" class="text-amber-600 hover:underline">
+                                                Ubah
+                                            </a>
+
+                                            <form action="{{ route('buku.destroy', $buku) }}" method="POST" class="inline"
+                                                  onsubmit="return confirm('Hapus buku ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:underline">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty
