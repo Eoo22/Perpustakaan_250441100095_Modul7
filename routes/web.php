@@ -8,13 +8,11 @@ use App\Http\Controllers\PengembalianController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RiwayatPeminjamanController;
 use App\Http\Controllers\UserController;
-use App\Models\Peminjaman;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
+// Halaman utama langsung ke daftar buku (belum login otomatis ke halaman login)
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('buku.index');
 });
 
 // Pintu masuk setelah login: diarahkan sesuai role
@@ -84,26 +82,6 @@ Route::middleware('auth')->group(function () {
             ->whereNumber('peminjaman')->name('riwayat.show');
     });
 
-    // ===== CELAH PRAKTIKUM =====
-
-    // A2 (SUDAH DIPERBAIKI): memakai parameter binding
-    Route::get('/buku-cari', function (Request $request) {
-        $judul = $request->query('judul', '');
-        $hasil = DB::select(
-            'SELECT * FROM bukus WHERE judul LIKE ?',
-            ['%'.$judul.'%']
-        );
-        return response()->json($hasil);
-    });
-
-    // A3 (SUDAH DIPERBAIKI): route GET /buku/{buku}/hapus dihapus.
-    // Penghapusan hanya lewat DELETE /buku/{buku} (buku.destroy) di atas.
-
-    // A4 (BELUM DIPERBAIKI, ditutup di Soal 4): IDOR
-    Route::get('/peminjaman/{id}', function ($id) {
-        return response()->json(Peminjaman::findOrFail($id));
-    })->whereNumber('id');
-
     // ===== Laporan =====
     Route::get('/laporan', [LaporanController::class, 'index'])
         ->middleware('permission:lihat-laporan-perpustakaan')->name('laporan.index');
@@ -112,6 +90,16 @@ Route::middleware('auth')->group(function () {
     Route::middleware('permission:kelola-data-pengguna')->group(function () {
         Route::resource('users', UserController::class)->except('show');
     });
+
+    // ===== CELAH PRAKTIKUM MODUL 6 (SEMENTARA, hanya middleware auth) =====
+    // A2: SQL Injection
+    Route::get('/buku-cari', [BukuController::class, 'cari'])->name('buku.cari');
+    // A3: CSRF (hapus lewat GET)
+    Route::get('/buku/{buku}/hapus', [BukuController::class, 'destroy'])
+        ->whereNumber('buku')->name('buku.hapus');
+    // A4: IDOR (tanpa cek pemilik)
+    Route::get('/peminjaman/{id}', [PeminjamanController::class, 'show'])
+        ->whereNumber('id')->name('peminjaman.show');
 });
 
 require __DIR__.'/auth.php';

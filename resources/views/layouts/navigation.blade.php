@@ -12,9 +12,45 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'admin.dashboard', 'petugas.dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @can('lihat-daftar-buku')
+                        <x-nav-link :href="route('buku.index')" :active="request()->routeIs('buku.*')">
+                            Buku
+                        </x-nav-link>
+                    @endcan
+
+                    @can('kelola-peminjaman')
+                        <x-nav-link :href="route('peminjaman.index')" :active="request()->routeIs('peminjaman.index')">
+                            Peminjaman
+                        </x-nav-link>
+                    @endcan
+
+                    @can('kelola-pengembalian')
+                        <x-nav-link :href="route('pengembalian.index')" :active="request()->routeIs('pengembalian.*')">
+                            Pengembalian
+                        </x-nav-link>
+                    @endcan
+
+                    @can('lihat-laporan-perpustakaan')
+                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                            Laporan
+                        </x-nav-link>
+                    @endcan
+
+                    @can('kelola-data-pengguna')
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                            Pengguna
+                        </x-nav-link>
+                    @endcan
+
+                    @can('lihat-riwayat-peminjaman-sendiri')
+                        <x-nav-link :href="route('riwayat.index')" :active="request()->routeIs('riwayat.*', 'peminjaman.create')">
+                            Riwayat Saya
+                        </x-nav-link>
+                    @endcan
                 </div>
             </div>
 
@@ -34,9 +70,11 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
+                        @can('lihat-profil-sendiri')
+                            <x-dropdown-link :href="route('profile.edit')">
+                                {{ __('Profile') }}
+                            </x-dropdown-link>
+                        @endcan
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
@@ -67,9 +105,45 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard', 'admin.dashboard', 'petugas.dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @can('lihat-daftar-buku')
+                <x-responsive-nav-link :href="route('buku.index')" :active="request()->routeIs('buku.*')">
+                    Buku
+                </x-responsive-nav-link>
+            @endcan
+
+            @can('kelola-peminjaman')
+                <x-responsive-nav-link :href="route('peminjaman.index')" :active="request()->routeIs('peminjaman.index')">
+                    Peminjaman
+                </x-responsive-nav-link>
+            @endcan
+
+            @can('kelola-pengembalian')
+                <x-responsive-nav-link :href="route('pengembalian.index')" :active="request()->routeIs('pengembalian.*')">
+                    Pengembalian
+                </x-responsive-nav-link>
+            @endcan
+
+            @can('lihat-laporan-perpustakaan')
+                <x-responsive-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                    Laporan
+                </x-responsive-nav-link>
+            @endcan
+
+            @can('kelola-data-pengguna')
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    Pengguna
+                </x-responsive-nav-link>
+            @endcan
+
+            @can('lihat-riwayat-peminjaman-sendiri')
+                <x-responsive-nav-link :href="route('riwayat.index')" :active="request()->routeIs('riwayat.*', 'peminjaman.create')">
+                    Riwayat Saya
+                </x-responsive-nav-link>
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->
@@ -80,9 +154,11 @@
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
+                @can('lihat-profil-sendiri')
+                    <x-responsive-nav-link :href="route('profile.edit')">
+                        {{ __('Profile') }}
+                    </x-responsive-nav-link>
+                @endcan
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">

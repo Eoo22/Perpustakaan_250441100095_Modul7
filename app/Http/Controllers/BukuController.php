@@ -3,85 +3,95 @@
 namespace App\Http\Controllers;
 
 use App\Models\Buku;
+use App\Models\Kategori;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class BukuController extends Controller
 {
-    /**
-     * Menampilkan halaman utama daftar buku.
-     */
-    public function index()
+    public function index(Request $request): View
     {
-        $bukus = Buku::all();
+        $bukus = Buku::with('kategori')
+            ->when($request->filled('cari'), function ($q) use ($request) {
+                $cari = $request->query('cari');
+                $q->where(function ($q) use ($cari) {
+                    $q->where('judul', 'like', "%{$cari}%")
+                        ->orWhere('penulis', 'like', "%{$cari}%");
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
         return view('buku.index', compact('bukus'));
     }
 
     /**
-     * SOAL 1 (A2): SQL Injection melalui DB::select() dengan penggabungan input langsung.
+     * CELAH A2 (SEMENTARA untuk praktikum): input digabungkan langsung ke SQL.
+     * GET /buku-cari?judul=...
      */
-    public function cariRentan(Request $request)
+    public function cari(Request $request): JsonResponse
     {
-        $judul = $request->input('judul', '');
-        
-        // KERENTANAN A2: Menggabungkan variabel $judul langsung ke dalam string SQL mentah
+        $judul = $request->query('judul');
+
         $hasil = DB::select("SELECT * FROM bukus WHERE judul = '$judul'");
 
         return response()->json($hasil);
     }
 
-    /**
-     * SOAL 1 (A3): Penghapusan data menggunakan HTTP GET.
-     */
-    public function destroyGetRentan($id)
+    public function show(Buku $buku): View
     {
-        // KERENTANAN A3: Menerima aksi hapus melalui method GET tanpa validasi CSRF/DELETE
-        $buku = Buku::findOrFail($id);
+        $buku->load('kategori');
+
+        return view('buku.show', compact('buku'));
+    }
+
+    public function create(): View
+    {
+        return view('buku.create', [
+            'kategoris' => Kategori::orderBy('nama')->get(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        Buku::create($request->validate($this->rules()));
+
+        return redirect()->route('buku.index')->with('success', 'Buku berhasil ditambahkan.');
+    }
+
+    public function edit(Buku $buku): View
+    {
+        return view('buku.edit', [
+            'buku' => $buku,
+            'kategoris' => Kategori::orderBy('nama')->get(),
+        ]);
+    }
+
+    public function update(Request $request, Buku $buku): RedirectResponse
+    {
+        $buku->update($request->validate($this->rules()));
+
+        return redirect()->route('buku.index')->with('success', 'Buku berhasil diperbarui.');
+    }
+
+    public function destroy(Buku $buku): RedirectResponse
+    {
         $buku->delete();
 
-        return redirect()->back()->with('success', 'Buku berhasil dihapus via GET.');
+        return redirect()->route('buku.index')->with('success', 'Buku berhasil dihapus.');
     }
 
-    /**
-     * Menyimpan buku baru.
-     */
-    public function store(Request $request)
+    private function rules(): array
     {
-        $validated = $request->validate([
-            'kategori_id' => 'required|integer',
-            'judul' => 'required|string|max:255',
-            'penulis' => 'required|string|max:255',
-            'tahun_terbit' => 'required|integer',
-        ]);
-
-        $buku = Buku::create($validated);
-
-        return response()->json(['message' => 'Buku berhasil ditambahkan!', 'data' => $buku], 201);
-    }
-
-    /**
-     * Memperbarui data buku.
-     */
-    public function update(Request $request, Buku $buku)
-    {
-        $validated = $request->validate([
-            'kategori_id' => 'required|integer',
-            'judul' => 'required|string|max:255',
-            'penulis' => 'required|string|max:255',
-            'tahun_terbit' => 'required|integer',
-        ]);
-
-        $buku->update($validated);
-
-        return response()->json(['message' => 'Buku berhasil diubah!', 'data' => $buku]);
-    }
-
-    /**
-     * Menghapus buku standar (bawaan modul sebelumnya).
-     */
-    public function destroy(Buku $buku)
-    {
-        $buku->delete();
-        return response()->json(['message' => 'Buku berhasil dihapus!']);
+        return [
+            'kategori_id' => ['required', 'integer', 'exists:kategoris,id'],
+            'judul' => ['required', 'string', 'max:150'],
+            'penulis' => ['required', 'string', 'max:100'],
+            'tahun_terbit' => ['required', 'integer', 'min:1000', 'max:'.date('Y')],
+        ];
     }
 }

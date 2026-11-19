@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Anggota;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,13 +27,30 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($request->validated());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        // Sinkronkan ke data anggota milik sendiri (jika ada)
+        if ($anggota = $user->anggota) {
+            $anggota->nama = $user->name;
+
+            $emailDipakaiLain = Anggota::where('email', $user->email)
+                ->where('id', '!=', $anggota->id)
+                ->exists();
+
+            if (! $emailDipakaiLain) {
+                $anggota->email = $user->email;
+            }
+
+            $anggota->save();
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
