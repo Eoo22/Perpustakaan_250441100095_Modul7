@@ -6,6 +6,7 @@ use App\Models\Buku;
 use App\Models\Peminjaman;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class PeminjamanController extends Controller
@@ -22,13 +23,11 @@ class PeminjamanController extends Controller
         return view('peminjaman.index', compact('peminjamans'));
     }
 
-    /**
-     * CELAH A4 (SEMENTARA untuk praktikum): tidak ada pemeriksaan pemilik.
-     * GET /peminjaman/{id}
-     */
+    /** Detail peminjaman: wajib lolos otorisasi PeminjamanPolicy@view. */
     public function show($id): View
     {
         $peminjaman = Peminjaman::with(['anggota', 'buku.kategori'])->findOrFail($id);
+        Gate::authorize('view', $peminjaman);
 
         return view('peminjaman.show', compact('peminjaman'));
     }

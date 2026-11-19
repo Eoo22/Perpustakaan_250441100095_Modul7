@@ -3,43 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Models\Buku;
-use App\Models\Kategori;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class BukuController extends Controller
 {
     public function index(Request $request): View
     {
+        $keyword = trim((string) $request->query('q', ''));
+
         $bukus = Buku::with('kategori')
-            ->when($request->filled('cari'), function ($q) use ($request) {
-                $cari = $request->query('cari');
-                $q->where(function ($q) use ($cari) {
-                    $q->where('judul', 'like', "%{$cari}%")
-                        ->orWhere('penulis', 'like', "%{$cari}%");
+            ->when($keyword !== '', function ($query) use ($keyword) {
+                $escaped = addcslashes($keyword, '%_\\');
+                $query->where(function ($sub) use ($escaped) {
+                    $sub->where('judul', 'like', "%{$escaped}%")
+                        ->orWhere('penulis', 'like', "%{$escaped}%");
                 });
             })
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+            ->orderBy('judul')
+            ->get();
 
-        return view('buku.index', compact('bukus'));
+        return view('buku.index', compact('bukus', 'keyword'));
     }
 
-    /**
-     * CELAH A2 (SEMENTARA untuk praktikum): input digabungkan langsung ke SQL.
-     * GET /buku-cari?judul=...
-     */
-    public function cari(Request $request): JsonResponse
+    // A2: Pencarian aman menggunakan parameter binding (tanpa string SQL mentah)
+    public function cari(Request $request): View
     {
-        $judul = $request->query('judul');
+        $keyword = trim((string) $request->query('q', ''));
 
-        $hasil = DB::select("SELECT * FROM bukus WHERE judul = '$judul'");
+        $bukus = Buku::with('kategori')
+            ->when($keyword !== '', function ($query) use ($keyword) {
+                $escaped = addcslashes($keyword, '%_\\');
+                $query->where(function ($sub) use ($escaped) {
+                    $sub->where('judul', 'like', "%{$escaped}%")
+                        ->orWhere('penulis', 'like', "%{$escaped}%");
+                });
+            })
+            ->orderBy('judul')
+            ->get();
 
-        return response()->json($hasil);
+        return view('buku.index', compact('bukus', 'keyword'));
     }
 
     public function show(Buku $buku): View
@@ -51,47 +55,45 @@ class BukuController extends Controller
 
     public function create(): View
     {
-        return view('buku.create', [
-            'kategoris' => Kategori::orderBy('nama')->get(),
-        ]);
+        return view('buku.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
-        Buku::create($request->validate($this->rules()));
+        $validated = $request->validate([
+            'judul' => ['required', 'string', 'max:255'],
+            'penulis' => ['required', 'string', 'max:255'],
+            'deskripsi' => ['nullable', 'string'],
+        ]);
+
+        Buku::create($validated);
 
         return redirect()->route('buku.index')->with('success', 'Buku berhasil ditambahkan.');
     }
 
     public function edit(Buku $buku): View
     {
-        return view('buku.edit', [
-            'buku' => $buku,
-            'kategoris' => Kategori::orderBy('nama')->get(),
-        ]);
+        return view('buku.edit', compact('buku'));
     }
 
     public function update(Request $request, Buku $buku): RedirectResponse
     {
-        $buku->update($request->validate($this->rules()));
+        $validated = $request->validate([
+            'judul' => ['required', 'string', 'max:255'],
+            'penulis' => ['required', 'string', 'max:255'],
+            'deskripsi' => ['nullable', 'string'],
+        ]);
+
+        $buku->update($validated);
 
         return redirect()->route('buku.index')->with('success', 'Buku berhasil diperbarui.');
     }
 
+    // A3: Hapus buku hanya lewat DELETE dengan proteksi route + @csrf + @method('DELETE')
     public function destroy(Buku $buku): RedirectResponse
     {
         $buku->delete();
 
         return redirect()->route('buku.index')->with('success', 'Buku berhasil dihapus.');
-    }
-
-    private function rules(): array
-    {
-        return [
-            'kategori_id' => ['required', 'integer', 'exists:kategoris,id'],
-            'judul' => ['required', 'string', 'max:150'],
-            'penulis' => ['required', 'string', 'max:100'],
-            'tahun_terbit' => ['required', 'integer', 'min:1000', 'max:'.date('Y')],
-        ];
     }
 }

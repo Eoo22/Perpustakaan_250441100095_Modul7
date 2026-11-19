@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
     // ===== Buku: lihat (semua role) =====
     Route::middleware('permission:lihat-daftar-buku')->group(function () {
         Route::get('/buku', [BukuController::class, 'index'])->name('buku.index');
+        Route::get('/buku-cari', [BukuController::class, 'cari'])->name('buku.cari');
         Route::get('/buku/{buku}', [BukuController::class, 'show'])
             ->whereNumber('buku')->name('buku.show');
     });
@@ -63,6 +64,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/peminjaman', [PeminjamanController::class, 'index'])
         ->middleware('permission:kelola-peminjaman')->name('peminjaman.index');
+    Route::get('/peminjaman/{id}', [PeminjamanController::class, 'show'])
+        ->whereNumber('id')->name('peminjaman.show');
     Route::post('/peminjaman/{peminjaman}/setujui', [PeminjamanController::class, 'setujui'])
         ->middleware('permission:proses-persetujuan-peminjaman')->name('peminjaman.setujui');
     Route::post('/peminjaman/{peminjaman}/tolak', [PeminjamanController::class, 'tolak'])
@@ -90,16 +93,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('permission:kelola-data-pengguna')->group(function () {
         Route::resource('users', UserController::class)->except('show');
     });
-
-    // ===== CELAH PRAKTIKUM MODUL 6 (SEMENTARA, hanya middleware auth) =====
-    // A2: SQL Injection
-    Route::get('/buku-cari', [BukuController::class, 'cari'])->name('buku.cari');
-    // A3: CSRF (hapus lewat GET)
-    Route::get('/buku/{buku}/hapus', [BukuController::class, 'destroy'])
-        ->whereNumber('buku')->name('buku.hapus');
-    // A4: IDOR (tanpa cek pemilik)
-    Route::get('/peminjaman/{id}', [PeminjamanController::class, 'show'])
-        ->whereNumber('id')->name('peminjaman.show');
 });
 
 require __DIR__.'/auth.php';
