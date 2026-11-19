@@ -22,6 +22,8 @@ Route::middleware('auth')->group(function () {
     if (class_exists(\App\Models\Peminjaman::class) && class_exists(PeminjamanController::class)) {
         Route::get('/riwayat', [PeminjamanController::class, 'index'])->name('riwayat.index');
         Route::get('/riwayat/{peminjaman}', [PeminjamanController::class, 'show'])->name('riwayat.show');
+        Route::get('/peminjaman/create', [PeminjamanController::class, 'create'])->name('peminjaman.create');
+        Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
         Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show'])->name('peminjaman.show');
     } else {
         Route::get('/riwayat', function () {
@@ -44,6 +46,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/buku/{buku}', [BukuController::class, 'show'])->name('buku.show');
+});
+
+// SEMENTARA (Soal 5a): hapus setelah pengujian error APP_DEBUG=false selesai
+Route::get('/_test-error', function () {
+    throw new \RuntimeException('Uji halaman error produksi');
 });
 
 require __DIR__.'/auth.php';

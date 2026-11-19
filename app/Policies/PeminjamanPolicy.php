@@ -2,8 +2,10 @@
 
 namespace App\Policies;
 
+use App\Models\Anggota;
 use App\Models\Peminjaman;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 class PeminjamanPolicy
 {
@@ -33,6 +35,26 @@ class PeminjamanPolicy
             is_object($userModel) && method_exists($userModel, 'getKey') ? $userModel->getKey() : null,
             is_object($siswaModel) && method_exists($siswaModel, 'getKey') ? $siswaModel->getKey() : null,
         ];
+
+        $anggotaId = $peminjaman->getAttribute('anggota_id');
+        if ($anggotaId !== null && $anggotaId !== '' && class_exists(Anggota::class)) {
+            $anggotaTable = (new Anggota())->getTable();
+            if (Schema::hasTable($anggotaTable)) {
+                $anggotaRecord = Anggota::query()->find($anggotaId);
+                if ($anggotaRecord) {
+                    foreach (['user_id', 'id_user'] as $userFk) {
+                        if (Schema::hasColumn($anggotaTable, $userFk)) {
+                            $ownerCandidates[] = $anggotaRecord->getAttribute($userFk);
+                        }
+                    }
+                    if (Schema::hasColumn($anggotaTable, 'email') && ! empty($user->email)) {
+                        if (strcasecmp((string) $anggotaRecord->getAttribute('email'), (string) $user->email) === 0) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
 
         foreach ($ownerCandidates as $ownerId) {
             if ($ownerId !== null && $ownerId !== '' && (string) $ownerId === (string) $userId) {
