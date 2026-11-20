@@ -30,6 +30,12 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Soal 3: Gate pengelolaan buku untuk admin dan petugas
-        Gate::define('kelola-buku', fn (User $user): bool => $isStaff($user));
+        Gate::define('kelola-buku', fn(User $user): bool => $isStaff($user));
+    }
+    public function boot(): void
+    {
+        if ($this->app->environment('production')) {
+            \URL::forceScheme('https');
+        }
     }
 }
