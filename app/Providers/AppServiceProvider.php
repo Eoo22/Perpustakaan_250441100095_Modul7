@@ -6,6 +6,7 @@ use App\Models\Peminjaman;
 use App\Models\User;
 use App\Policies\PeminjamanPolicy;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +18,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         $isStaff = function (User $user): bool {
             $hasSpatieRole = method_exists($user, 'hasAnyRole')
                 ? $user->hasAnyRole(['admin', 'petugas'])
@@ -31,11 +36,5 @@ class AppServiceProvider extends ServiceProvider
 
         // Soal 3: Gate pengelolaan buku untuk admin dan petugas
         Gate::define('kelola-buku', fn(User $user): bool => $isStaff($user));
-    }
-    public function boot(): void
-    {
-        if ($this->app->environment('production')) {
-            \URL::forceScheme('https');
-        }
     }
 }
